@@ -24,7 +24,7 @@ const monthThemes = [
 
 function MonthSelector({ selectedMonth, onSelectMonth }) {
   return (
-    <div className="inline-flex items-center gap-2">
+    <div className="flex w-full items-center gap-2">
       <label htmlFor="month-select" className="text-sm font-semibold text-slate-600">
         選擇月份
       </label>
@@ -32,7 +32,7 @@ function MonthSelector({ selectedMonth, onSelectMonth }) {
         id="month-select"
         value={selectedMonth}
         onChange={(event) => onSelectMonth(Number(event.target.value))}
-        className="rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm outline-none transition focus:border-blue-500"
+        className="min-w-0 flex-1 rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm outline-none transition focus:border-blue-500"
       >
         {monthNames.map((month, idx) => (
           <option key={month} value={idx}>
@@ -66,7 +66,7 @@ function MonthDetail({ month, monthIndex, image, onImageChange, isImageLoaded, o
   return (
     <div className="grid gap-6 lg:grid-cols-2">
       <section className="rounded-xl bg-white p-4 shadow-lg">
-        <div className="relative flex h-56 w-full items-center justify-center overflow-hidden rounded-lg bg-slate-200 sm:h-64">
+        <div className="relative flex h-44 w-full items-center justify-center overflow-hidden rounded-lg bg-slate-200 sm:h-64">
           {image ? (
             <>
               <div className={`absolute inset-0 bg-slate-200 transition-opacity ${isImageLoaded ? 'opacity-0' : 'animate-pulse opacity-100'}`} />
@@ -101,7 +101,7 @@ function MonthDetail({ month, monthIndex, image, onImageChange, isImageLoaded, o
       </section>
 
       <section className="rounded-xl bg-white p-4 shadow-lg sm:p-6">
-        <h2 className="mb-4 text-3xl font-bold text-blue-600">{month}</h2>
+        <h2 className="mb-3 text-2xl font-bold text-blue-600 sm:mb-4 sm:text-3xl">{month}</h2>
 
         <div className="mb-2 grid grid-cols-7 gap-1">
           {['日', '一', '二', '三', '四', '五', '六'].map((day) => (
@@ -115,7 +115,7 @@ function MonthDetail({ month, monthIndex, image, onImageChange, isImageLoaded, o
           {days.map((day, idx) => (
             <div
               key={`${month}-${idx}`}
-              className={`flex aspect-square items-center justify-center rounded-md text-sm font-medium sm:text-base ${
+              className={`flex aspect-square items-center justify-center rounded-md text-xs font-medium sm:text-base ${
                 day ? 'bg-blue-100 text-blue-700' : 'bg-transparent'
               }`}
             >
@@ -182,13 +182,13 @@ function App() {
   };
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4 sm:p-6 lg:p-8">
+    <main className="min-h-screen overflow-x-hidden bg-gradient-to-br from-blue-50 to-indigo-100 p-3 sm:p-6 lg:p-8">
       <div className="mx-auto max-w-5xl">
-        <header className="mb-6 text-center sm:mb-8">
-          <h1 className="mb-2 text-3xl font-bold text-slate-800 sm:text-5xl">{CALENDAR_YEAR} 月曆</h1>
+        <header className="mb-4 text-center sm:mb-8">
+          <h1 className="mb-2 text-2xl font-bold text-slate-800 sm:text-5xl">{CALENDAR_YEAR} 月曆</h1>
         </header>
 
-        <section className="mb-6 rounded-xl bg-white p-4 shadow-lg sm:p-5">
+        <section className="mb-4 rounded-xl bg-white p-3 shadow-lg sm:mb-6 sm:p-5">
           <MonthSelector selectedMonth={selectedMonth} onSelectMonth={setSelectedMonth} />
         </section>
 
