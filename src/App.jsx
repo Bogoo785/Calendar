@@ -253,48 +253,44 @@ function DayPlanner({ selectedDateLabel, entry, onAddTodo, onToggleTodo, onDelet
       <div className="mt-4">
         <div className="mb-2 flex items-center justify-between">
           <p className="text-sm font-semibold text-slate-600">Note</p>
-          {!editingNote && (
-            <button
-              type="button"
-              onClick={handleStartEdit}
-              className="rounded-md px-2 py-1 text-xs text-blue-500 hover:bg-blue-50"
-            >
-              撰寫
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={handleStartEdit}
+            className="rounded-md px-2 py-1 text-xs text-blue-500 hover:bg-blue-50"
+          >
+            撰寫
+          </button>
         </div>
-        {editingNote ? (
-          <>
-            <textarea
-              value={noteInput}
-              onChange={(e) => setNoteInput(e.target.value)}
-              rows={4}
-              autoFocus
-              placeholder="今天心情怎麼樣？"
-              className="w-full resize-none rounded-lg border border-blue-400 px-3 py-2 text-sm outline-none"
-            />
-            <div className="mt-2 flex justify-end gap-2">
-              <button
-                type="button"
-                onClick={() => setEditingNote(false)}
-                className="rounded-md px-3 py-1.5 text-xs text-slate-500 hover:bg-slate-100"
-              >
-                取消
-              </button>
-              <button
-                type="button"
-                onClick={handleConfirmNote}
-                className="rounded-md bg-blue-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-600"
-              >
-                確定
-              </button>
-            </div>
-          </>
-        ) : (
-          <div className="min-h-16 rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-700 whitespace-pre-wrap">
-            {entry.note ? entry.note : <span className="text-slate-400">還沒有心情紀錄</span>}
-          </div>
-        )}
+        <textarea
+          value={editingNote ? noteInput : (entry.note ?? '')}
+          onChange={editingNote ? (e) => setNoteInput(e.target.value) : undefined}
+          readOnly={!editingNote}
+          rows={4}
+          autoFocus={editingNote}
+          placeholder="還沒有 Note"
+          className={`w-full resize-none rounded-lg px-3 py-2 text-sm outline-none ${
+            editingNote
+              ? 'border border-blue-400 bg-white'
+              : 'border border-transparent bg-slate-50 text-slate-700 cursor-default'
+          }`}
+        />
+        <div className="mt-2 flex justify-end gap-2" style={{ visibility: editingNote ? 'visible' : 'hidden' }}>
+          <button
+            type="button"
+            onClick={() => setEditingNote(false)}
+            className="rounded-md px-3 py-1.5 text-xs text-slate-500 hover:bg-slate-100"
+          >
+            取消
+          </button>
+          <button
+            type="button"
+            onClick={handleConfirmNote}
+            className="rounded-md bg-blue-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-600"
+          >
+            確定
+          </button>
+        </div>
+
       </div>
     </section>
   );
