@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 
 const monthNames = [
   '一月', '二月', '三月', '四月', '五月', '六月',
@@ -6,6 +6,7 @@ const monthNames = [
 ];
 
 const CALENDAR_YEAR = 2027;
+const DIARY_STORAGE_KEY = 'calendar-diary-entries-v1';
 
 const monthThemes = [
   { season: '冬', title: '雪之神社', image: 'https://loremflickr.com/1200/675/japan,winter,snow?lock=101' },
@@ -21,6 +22,16 @@ const monthThemes = [
   { season: '秋', title: '銀杏大道', image: 'https://loremflickr.com/1200/675/japan,ginkgo,autumn?lock=111' },
   { season: '冬', title: '聖誕樹燈景', image: 'https://loremflickr.com/1200/675/japan,christmas,tree,winter?lock=112' },
 ];
+
+function getDateKey(monthIndex, day) {
+  const month = String(monthIndex + 1).padStart(2, '0');
+  const dayText = String(day).padStart(2, '0');
+  return `${CALENDAR_YEAR}-${month}-${dayText}`;
+}
+
+function createEmptyEntry() {
+  return { todos: [], note: '' };
+}
 
 function MonthSelector({ selectedMonth, onSelectMonth }) {
   return (
@@ -44,7 +55,17 @@ function MonthSelector({ selectedMonth, onSelectMonth }) {
   );
 }
 
-function MonthDetail({ month, monthIndex, image, onImageChange, isImageLoaded, onImageLoaded }) {
+function MonthDetail({
+  month,
+  monthIndex,
+  image,
+  onImageChange,
+  isImageLoaded,
+  onImageLoaded,
+  selectedDay,
+  onSelectDay,
+  getDayTodos,
+}) {
   const daysInMonth = new Date(CALENDAR_YEAR, monthIndex + 1, 0).getDate();
   const firstDay = new Date(CALENDAR_YEAR, monthIndex, 1).getDay();
   const days = [];
@@ -112,26 +133,145 @@ function MonthDetail({ month, monthIndex, image, onImageChange, isImageLoaded, o
         </div>
 
         <div className="grid grid-cols-7 gap-1 sm:gap-2">
-          {days.map((day, idx) => (
-            <div
-              key={`${month}-${idx}`}
-              className={`flex aspect-square items-center justify-center rounded-md text-xs font-medium sm:text-base ${
-                day ? 'bg-blue-100 text-blue-700' : 'bg-transparent'
-              }`}
-            >
-              {day}
-            </div>
-          ))}
+          {days.map((day, idx) => {
+            const todos = day ? getDayTodos(day) : [];
+            return day ? (
+              <button
+                key={`${month}-${idx}`}
+                type="button"
+                onClick={() => onSelectDay(day)}
+                className={`relative flex min-h-10 w-full flex-col items-center rounded-md px-0.5 py-1 text-xs font-medium sm:min-h-12 sm:text-sm ${
+                  selectedDay === day
+                    ? 'bg-blue-500 text-white ring-2 ring-blue-200'
+                    : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+                }`}
+              >
+                <span className="font-semibold">{day}</span>
+                {todos.length > 0 && (
+                  <ul className="mt-0.5 w-full space-y-0.5">
+                    {todos.map((todo) => (
+                      <li
+                        key={todo.id}
+                        className={`truncate rounded text-left text-[10px] leading-tight px-0.5 ${
+                          selectedDay === day ? 'bg-blue-400 text-white' : 'bg-white text-blue-700'
+                        } ${todo.done ? 'line-through opacity-50' : ''}`}
+                      >
+                        {todo.text}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </button>
+            ) : (
+              <div key={`${month}-${idx}`} className="min-h-10 sm:min-h-12" />
+            );
+          })}
         </div>
       </section>
     </div>
   );
 }
 
+function DayPlanner({ selectedDateLabel, entry, onAddTodo, onToggleTodo, onDeleteTodo, onSetNote }) {
+  const [todoInput, setTodoInput] = useState('');
+
+  const handleAddTodo = () => {
+    const trimmed = todoInput.trim();
+    if (!trimmed) return;
+    onAddTodo(trimmed);
+    setTodoInput('');
+  };
+
+  return (
+    <section className="mt-4 rounded-xl bg-white p-4 shadow-lg sm:mt-6 sm:p-5">
+      <div className="mb-3">
+        <h3 className="text-lg font-bold text-slate-800 sm:text-xl">{selectedDateLabel}</h3>
+      </div>
+
+      <div>
+        <p className="mb-2 text-sm font-semibold text-slate-600">待辦事項</p>
+        <div className="mb-3 flex gap-2">
+          <input
+            type="text"
+            value={todoInput}
+            onChange={(event) => setTodoInput(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter') handleAddTodo();
+            }}
+            placeholder="輸入今天要做的事"
+            className="min-w-0 flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-500"
+          />
+          <button
+            type="button"
+            onClick={handleAddTodo}
+            className="rounded-lg bg-blue-500 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-600"
+          >
+            新增
+          </button>
+        </div>
+
+        <ul className="space-y-2">
+          {entry.todos.map((todo) => (
+            <li key={todo.id} className="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2">
+              <span className={`text-sm ${todo.done ? 'text-slate-400 line-through' : 'text-slate-700'}`}>{todo.text}</span>
+              <div className="flex shrink-0 gap-1">
+                <button
+                  type="button"
+                  onClick={() => onToggleTodo(todo.id)}
+                  className={`rounded-md px-2 py-1 text-xs ${todo.done ? 'text-slate-400 hover:bg-slate-100' : 'text-green-600 hover:bg-green-50'}`}
+                >
+                  {todo.done ? '取消' : '完成'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onDeleteTodo(todo.id)}
+                  className="rounded-md px-2 py-1 text-xs text-red-500 hover:bg-red-50"
+                >
+                  刪除
+                </button>
+              </div>
+            </li>
+          ))}
+          {entry.todos.length === 0 && (
+            <li className="rounded-lg bg-slate-50 px-3 py-3 text-sm text-slate-500">這一天還沒有待辦事項</li>
+          )}
+        </ul>
+      </div>
+
+      <div className="mt-4">
+        <p className="mb-2 text-sm font-semibold text-slate-600">心情紀錄</p>
+        <textarea
+          value={entry.note ?? ''}
+          onChange={(e) => onSetNote(e.target.value)}
+          maxLength={100}
+          rows={3}
+          placeholder="今天心情怎麼樣？"
+          className="w-full resize-none rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-500"
+        />
+        <p className="mt-1 text-right text-xs text-slate-400">{(entry.note ?? '').length} / 100</p>
+      </div>
+    </section>
+  );
+}
+
 function App() {
   const [selectedMonth, setSelectedMonth] = useState(() => new Date().getMonth());
+  const [selectedDay, setSelectedDay] = useState(() => {
+    const today = new Date();
+    return today.getFullYear() === CALENDAR_YEAR ? today.getDate() : 1;
+  });
   const [images, setImages] = useState(() => monthThemes.map((theme) => theme.image));
   const [loadedState, setLoadedState] = useState(() => monthThemes.map(() => false));
+  const [diaryEntries, setDiaryEntries] = useState(() => {
+    try {
+      const raw = localStorage.getItem(DIARY_STORAGE_KEY);
+      if (!raw) return {};
+      const parsed = JSON.parse(raw);
+      return typeof parsed === 'object' && parsed ? parsed : {};
+    } catch {
+      return {};
+    }
+  });
 
   useEffect(() => {
     images.forEach((src, idx) => {
@@ -158,6 +298,19 @@ function App() {
     });
   }, [images, loadedState]);
 
+  useEffect(() => {
+    localStorage.setItem(DIARY_STORAGE_KEY, JSON.stringify(diaryEntries));
+  }, [diaryEntries]);
+
+  useEffect(() => {
+    const maxDay = new Date(CALENDAR_YEAR, selectedMonth + 1, 0).getDate();
+    setSelectedDay((prev) => {
+      if (prev < 1) return 1;
+      if (prev > maxDay) return maxDay;
+      return prev;
+    });
+  }, [selectedMonth]);
+
   const handleImageChange = (monthIndex, imageData) => {
     setImages((prev) => {
       const next = [...prev];
@@ -181,6 +334,56 @@ function App() {
     });
   };
 
+  const selectedDateKey = getDateKey(selectedMonth, selectedDay);
+  const selectedEntry = diaryEntries[selectedDateKey] ?? createEmptyEntry();
+
+  const getDayTodos = (day) => {
+    const key = getDateKey(selectedMonth, day);
+    const entry = diaryEntries[key];
+    return entry?.todos ?? [];
+  };
+
+  const setEntryForSelectedDay = (updater) => {
+    setDiaryEntries((prev) => {
+      const current = prev[selectedDateKey] ?? createEmptyEntry();
+      const nextEntry = updater(current);
+      return {
+        ...prev,
+        [selectedDateKey]: nextEntry,
+      };
+    });
+  };
+
+  const handleAddTodo = (text) => {
+    setEntryForSelectedDay((current) => ({
+      ...current,
+      todos: [{ id: `${Date.now()}-${Math.random()}`, text, done: false }, ...current.todos],
+    }));
+  };
+
+  const handleToggleTodo = (todoId) => {
+    setEntryForSelectedDay((current) => ({
+      ...current,
+      todos: current.todos.map((todo) => (todo.id === todoId ? { ...todo, done: !todo.done } : todo)),
+    }));
+  };
+
+  const handleDeleteTodo = (todoId) => {
+    setEntryForSelectedDay((current) => ({
+      ...current,
+      todos: current.todos.filter((todo) => todo.id !== todoId),
+    }));
+  };
+
+  const handleSetNote = (text) => {
+    setEntryForSelectedDay((current) => ({
+      ...current,
+      note: text.slice(0, 100),
+    }));
+  };
+
+  const selectedDateLabel = `${CALENDAR_YEAR} / ${selectedMonth + 1} / ${selectedDay}`;
+
   return (
     <main className="min-h-screen overflow-x-hidden bg-gradient-to-br from-blue-50 to-indigo-100 p-3 sm:p-6 lg:p-8">
       <div className="mx-auto max-w-5xl">
@@ -199,6 +402,18 @@ function App() {
           onImageChange={handleImageChange}
           isImageLoaded={loadedState[selectedMonth]}
           onImageLoaded={handleImageLoaded}
+          selectedDay={selectedDay}
+          onSelectDay={setSelectedDay}
+          getDayTodos={getDayTodos}
+        />
+
+        <DayPlanner
+          selectedDateLabel={selectedDateLabel}
+          entry={selectedEntry}
+          onAddTodo={handleAddTodo}
+          onToggleTodo={handleToggleTodo}
+          onDeleteTodo={handleDeleteTodo}
+          onSetNote={handleSetNote}
         />
       </div>
     </main>
@@ -206,3 +421,4 @@ function App() {
 }
 
 export default App;
+
