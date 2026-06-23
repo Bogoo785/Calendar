@@ -174,6 +174,18 @@ function MonthDetail({
 
 function DayPlanner({ selectedDateLabel, entry, onAddTodo, onToggleTodo, onDeleteTodo, onSetNote }) {
   const [todoInput, setTodoInput] = useState('');
+  const [editingNote, setEditingNote] = useState(false);
+  const [noteInput, setNoteInput] = useState('');
+
+  const handleStartEdit = () => {
+    setNoteInput(entry.note ?? '');
+    setEditingNote(true);
+  };
+
+  const handleConfirmNote = () => {
+    onSetNote(noteInput);
+    setEditingNote(false);
+  };
 
   const handleAddTodo = () => {
     const trimmed = todoInput.trim();
@@ -239,16 +251,50 @@ function DayPlanner({ selectedDateLabel, entry, onAddTodo, onToggleTodo, onDelet
       </div>
 
       <div className="mt-4">
-        <p className="mb-2 text-sm font-semibold text-slate-600">心情紀錄</p>
-        <textarea
-          value={entry.note ?? ''}
-          onChange={(e) => onSetNote(e.target.value)}
-          maxLength={100}
-          rows={3}
-          placeholder="今天心情怎麼樣？"
-          className="w-full resize-none rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-500"
-        />
-        <p className="mt-1 text-right text-xs text-slate-400">{(entry.note ?? '').length} / 100</p>
+        <div className="mb-2 flex items-center justify-between">
+          <p className="text-sm font-semibold text-slate-600">心情紀錄</p>
+          {!editingNote && (
+            <button
+              type="button"
+              onClick={handleStartEdit}
+              className="rounded-md px-2 py-1 text-xs text-blue-500 hover:bg-blue-50"
+            >
+              撰寫
+            </button>
+          )}
+        </div>
+        {editingNote ? (
+          <>
+            <textarea
+              value={noteInput}
+              onChange={(e) => setNoteInput(e.target.value)}
+              rows={4}
+              autoFocus
+              placeholder="今天心情怎麼樣？"
+              className="w-full resize-none rounded-lg border border-blue-400 px-3 py-2 text-sm outline-none"
+            />
+            <div className="mt-2 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setEditingNote(false)}
+                className="rounded-md px-3 py-1.5 text-xs text-slate-500 hover:bg-slate-100"
+              >
+                取消
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmNote}
+                className="rounded-md bg-blue-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-600"
+              >
+                確定
+              </button>
+            </div>
+          </>
+        ) : (
+          <div className="min-h-16 rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-700 whitespace-pre-wrap">
+            {entry.note ? entry.note : <span className="text-slate-400">還沒有心情紀錄</span>}
+          </div>
+        )}
       </div>
     </section>
   );
@@ -378,7 +424,7 @@ function App() {
   const handleSetNote = (text) => {
     setEntryForSelectedDay((current) => ({
       ...current,
-      note: text.slice(0, 100),
+      note: text,
     }));
   };
 
