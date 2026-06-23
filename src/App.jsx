@@ -252,7 +252,7 @@ function DayPlanner({ selectedDateLabel, entry, onAddTodo, onToggleTodo, onDelet
 
       <div className="mt-4">
         <div className="mb-2 flex items-center justify-between">
-          <p className="text-sm font-semibold text-slate-600">心情紀錄</p>
+          <p className="text-sm font-semibold text-slate-600">Note</p>
           {!editingNote && (
             <button
               type="button"
